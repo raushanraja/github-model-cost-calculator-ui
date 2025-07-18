@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Models Cost Calculator</title>
+    <!-- Include Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900">
+
+    <div class="min-h-screen text-white flex items-center justify-center p-4">
+        <div class="w-full max-w-2xl bg-gray-800 rounded-lg shadow-lg p-8">
+            <h1 class="text-3xl font-bold mb-6 text-center text-gray-100">GitHub Models Cost Calculator</h1>
+
+            <div class="space-y-6">
+                <div>
+                    <label for="inputTokens" class="block text-sm font-medium text-gray-400 mb-2">
+                        Input Tokens
+                    </label>
+                    <input
+                        type="number"
+                        id="inputTokens"
+                        value="1000000"
+                        class="w-full bg-gray-700 border border-gray-600 rounded-md p-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                </div>
+
+                <div>
+                    <label for="outputTokens" class="block text-sm font-medium text-gray-400 mb-2">
+                        Output Tokens
+                    </label>
+                    <input
+                        type="number"
+                        id="outputTokens"
+                        value="1000000"
+                        class="w-full bg-gray-700 border border-gray-600 rounded-md p-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                </div>
+
+                <div>
+                    <label for="model" class="block text-sm font-medium text-gray-400 mb-2">
+                        Select a Model
+                    </label>
+                    <select
+                        id="model"
+                        class="w-full bg-gray-700 border border-gray-600 rounded-md p-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                        <!-- Options will be populated by JavaScript -->
+                    </select>
+                </div>
+            </div>
+
+            <div class="mt-8 pt-6 border-t border-gray-700">
+                <h2 class="text-xl font-semibold text-center text-gray-100 mb-4">Estimated Cost</h2>
+                <div class="bg-gray-900 rounded-lg p-6 flex flex-col items-center justify-center">
+                    <p id="costResult" class="text-4xl font-bold text-green-400">
+                        <!-- Result will be populated by JavaScript -->
+                    </p>
+                    <p class="text-sm text-gray-400 mt-2">
+                        Based on a price of $0.00001 per token unit.
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-6 text-xs text-gray-500 text-center">
+                <p id="calculationBreakdown">
+                    <!-- Breakdown will be populated by JavaScript -->
+                </p>
+            </div>
+            
+            <div class="text-center mt-8">
+                <a href="https://docs.github.com/en/billing/managing-billing-for-your-products/about-billing-for-github-models#available-models"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   class="text-sm text-gray-500 hover:text-blue-400 underline transition-colors">
+                    Model pricing based on official GitHub documentation
+                </a>
+            </div>
+
+            <!-- Date Last Updated Added Here -->
+            <div class="text-center mt-2 text-xs text-gray-600">
+                <p>Webpage last updated on: <span id="lastUpdatedDate"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Model Data ---
+            const models = [
+                { name: 'OpenAI GPT-4o', inputMultiplier: 0.25, outputMultiplier: 1.0 },
+                { name: 'OpenAI GPT-4o mini', inputMultiplier: 0.015, outputMultiplier: 0.06 },
+                { name: 'OpenAI GPT-4.1-mini', inputMultiplier: 0.04, outputMultiplier: 0.16 },
+                { name: 'OpenAI GPT-4.1', inputMultiplier: 0.2, outputMultiplier: 0.8 },
+                { name: 'Phi-3.5-MoE instruct (128k)', inputMultiplier: 0.016, outputMultiplier: 0.064 },
+                { name: 'Phi-3.5-mini instruct (128k)', inputMultiplier: 0.013, outputMultiplier: 0.052 },
+                { name: 'Phi-3.5-vision instruct (128k)', inputMultiplier: 0.013, outputMultiplier: 0.052 },
+                { name: 'Phi-3-medium instruct (4k)', inputMultiplier: 0.017, outputMultiplier: 0.068 },
+                { name: 'Phi-3-medium instruct (128k)', inputMultiplier: 0.017, outputMultiplier: 0.068 },
+                { name: 'Phi-3-mini instruct (4k)', inputMultiplier: 0.013, outputMultiplier: 0.052 },
+                { name: 'Phi-3-mini instruct (128k)', inputMultiplier: 0.013, outputMultiplier: 0.052 },
+                { name: 'Phi-3-small instruct (8k)', inputMultiplier: 0.015, outputMultiplier: 0.06 },
+                { name: 'Phi-3-small instruct (128k)', inputMultiplier: 0.015, outputMultiplier: 0.06 },
+                { name: 'Phi-4', inputMultiplier: 0.0125, outputMultiplier: 0.05 },
+                { name: 'Phi-4-mini-instruct', inputMultiplier: 0.0075, outputMultiplier: 0.03 },
+                { name: 'Phi-4-multimodal-instruct', inputMultiplier: 0.008, outputMultiplier: 0.032 },
+                { name: 'DeepSeek-R1', inputMultiplier: 0.135, outputMultiplier: 0.54 },
+                { name: 'DeepSeek-R1-0528', inputMultiplier: 0.135, outputMultiplier: 0.54 },
+                { name: 'DeepSeek-V3-0324', inputMultiplier: 0.114, outputMultiplier: 0.456 },
+                { name: 'MAI-DS-R1', inputMultiplier: 0.135, outputMultiplier: 0.54 },
+                { name: 'Grok 3 Mini', inputMultiplier: 0.025, outputMultiplier: 0.127 },
+                { name: 'Grok 3', inputMultiplier: 0.3, outputMultiplier: 1.5 },
+                { name: 'Llama 4 Maverick 17B Instruct FP8', inputMultiplier: 0.025, outputMultiplier: 0.1 },
+                { name: 'Llama-3.3-70B-Instruct', inputMultiplier: 0.071, outputMultiplier: 0.071 },
+            ];
+
+            const TOKEN_UNIT_PRICE = 0.00001;
+
+            // --- DOM Element References ---
+            const inputTokensEl = document.getElementById('inputTokens');
+            const outputTokensEl = document.getElementById('outputTokens');
+            const modelSelectEl = document.getElementById('model');
+            const costResultEl = document.getElementById('costResult');
+            const calculationBreakdownEl = document.getElementById('calculationBreakdown');
+            const lastUpdatedDateEl = document.getElementById('lastUpdatedDate');
+
+            // --- Logic ---
+            const setLastUpdatedDate = () => {
+                lastUpdatedDateEl.textContent = "July 18, 2025"
+            };
+
+            const populateModelDropdown = () => {
+                models.forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model.name;
+                    option.textContent = model.name;
+                    modelSelectEl.appendChild(option);
+                });
+            };
+
+            const calculateAndDisplayCost = () => {
+                const inputTokens = Number(inputTokensEl.value) || 0;
+                const outputTokens = Number(outputTokensEl.value) || 0;
+                const selectedModelName = modelSelectEl.value;
+                
+                const model = models.find(m => m.name === selectedModelName);
+                if (!model) return;
+
+                const inputTokenUnits = inputTokens * model.inputMultiplier;
+                const outputTokenUnits = outputTokens * model.outputMultiplier;
+                const totalTokenUnits = inputTokenUnits + outputTokenUnits;
+                const totalCost = totalTokenUnits * TOKEN_UNIT_PRICE;
+
+                costResultEl.textContent = `$${totalCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
+                calculationBreakdownEl.innerHTML = `Calculation for ${model.name}:<br>
+                    (${inputTokens.toLocaleString()} input tokens × ${model.inputMultiplier}) + (${outputTokens.toLocaleString()} output tokens × ${model.outputMultiplier}) × $${TOKEN_UNIT_PRICE}`;
+            };
+            
+            // --- Initialization ---
+            setLastUpdatedDate();
+            populateModelDropdown();
+            calculateAndDisplayCost();
+
+            // --- Event Listeners ---
+            inputTokensEl.addEventListener('input', calculateAndDisplayCost);
+            outputTokensEl.addEventListener('input', calculateAndDisplayCost);
+            modelSelectEl.addEventListener('change', calculateAndDisplayCost);
+        });
+    </script>
+
+</body>
+</html>
